@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Inter"; src: url("assets/fonts/Inter-RegularVariable.ttf"); font-weight: 100 900; }
+      :root { --ground:#0b0f17; --ink:#ffffff; --accent:#f5a524; --font-display:"Inter",sans-serif; }
+      * { margin:0; padding:0; box-sizing:border-box; }
+      html, body { margin:0; width:1920px; height:1080px; overflow:hidden; background:var(--ground); }
+      #root { position:relative; width:100%; height:100%; font-family:var(--font-display); color:var(--ink); }
+      #title-wrap { position:absolute; left:0; right:0; top:170px; text-align:center; }
+      #title { font-size:120px; font-weight:900; letter-spacing:-0.03em; }
+      #counter-wrap { position:absolute; left:0; right:0; top:420px; text-align:center; }
+      #counter { font-size:220px; font-weight:900; color:var(--accent); font-variant-numeric:tabular-nums; }
+      #caption { font-size:44px; font-weight:400; opacity:.8; margin-top:8px; }
+      #lower { position:absolute; left:120px; bottom:110px; padding:22px 40px; border-left:10px solid var(--accent); background:rgba(255,255,255,.08); }
+      #lower-name { font-size:52px; font-weight:700; }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="6"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="title-wrap" class="clip" data-start="0" data-duration="6" data-track-index="0"><h1 id="title">GRP Construtora</h1></div>
+      <div id="counter-wrap" class="clip" data-start="1" data-duration="5" data-track-index="1"><div id="counter">0</div><div id="caption">unidades entregues</div></div>
+      <div id="lower-clip" class="clip" data-start="3.9" data-duration="2.1" data-track-index="2"><div id="lower"><div id="lower-name">Ronaldo Vieira — Tecnologia</div></div></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#title", { opacity:0, y:60 }, { opacity:1, y:0, duration:0.9, ease:"power3.out" }, 0.2);
+      tl.fromTo("#counter-wrap", { opacity:0 }, { opacity:1, duration:0.4 }, 1);
+      const c = { v:0 };
+      tl.to(c, { v:1250, duration:2, ease:"power2.out", onUpdate(){ document.getElementById("counter").textContent = Math.round(c.v).toLocaleString("pt-BR"); } }, 1.2);
+      tl.fromTo("#lower", { opacity:0, x:-120 }, { opacity:1, x:0, duration:0.6, ease:"power3.out" }, 3.9);
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

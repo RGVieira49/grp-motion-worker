@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      /* Recriação da receita "intro-canal" (Criador de Motion / Remotion), tema feito-de-concreto, 30 fps. */
+      @font-face { font-family: "Anton"; src: url("assets/fonts/Anton-Regular.ttf"); font-weight: 400; }
+      @font-face { font-family: "InterVF"; src: url("assets/fonts/Inter-RegularVariable.ttf"); font-weight: 100 900; }
+      :root {
+        --ground: #0d1117;
+        --accent: #ffb020;
+        --accent2: #4fa3d9;
+        --ink: #f4f1ea;
+        --ink-soft: rgba(244, 241, 234, 0.72);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--ground); }
+      #root { position: relative; width: 1920px; height: 1080px; background: var(--ground); }
+      .fill { position: absolute; inset: 0; }
+      #glow { }
+      #vignette { background: radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(0, 0, 0, 0.45) 100%); }
+      #grain { position: absolute; inset: 0; opacity: 0.06; mix-blend-mode: overlay; }
+      #dust { pointer-events: none; }
+      .p { position: absolute; left: 0; top: 0; border-radius: 99px; background: var(--accent); }
+      #scene {
+        display: flex; align-items: center; justify-content: center;
+        padding: 65px 91px 65px;
+      }
+      #col { display: flex; flex-direction: column; align-items: center; gap: 26px; }
+      #shape-wrap { margin-bottom: 24px; width: 100px; height: 100px; }
+      #shape { width: 100px; height: 100px; background: var(--accent); border-radius: 16px; }
+      #name {
+        padding-top: 21px; font-family: "Anton"; font-weight: 400; font-size: 150px; line-height: 1.04;
+        letter-spacing: 0.005em; color: var(--ink); text-align: center; max-width: 1738px;
+      }
+      .m { display: inline-block; overflow: hidden; vertical-align: top; white-space: pre; padding-bottom: 12px; }
+      .m > span { display: inline-block; }
+      #rule { width: 560px; height: 4px; background: var(--accent); border-radius: 4px; transform-origin: 50% 50%; }
+      #tag {
+        font-family: "InterVF"; font-weight: 500; font-size: 38px; line-height: 1.08; letter-spacing: -0.025em;
+        color: var(--ink-soft); text-align: center; max-width: 1738px;
+      }
+      .w { display: inline-block; white-space: pre; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="4.2" data-width="1920" data-height="1080">
+      <div id="glow" class="fill"></div>
+      <div id="vignette" class="fill"></div>
+      <svg id="grain" width="1920" height="1080">
+        <filter id="grao"><feTurbulence id="turb" type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="0" /></filter>
+        <rect width="100%" height="100%" filter="url(#grao)" />
+      </svg>
+      <div id="dust" class="fill"></div>
+
+      <div id="scene" class="clip fill" data-start="0" data-duration="4.2" data-track-index="0">
+        <div id="col">
+          <div id="shape-wrap"><div id="shape"></div></div>
+          <div id="name"><span class="m" data-layout-allow-overflow><span>FEITO </span></span><span class="m" data-layout-allow-overflow><span>DE </span></span><span class="m" data-layout-allow-overflow><span>CONCRETO</span></span></div>
+          <div id="rule"></div>
+          <div id="tag"><span class="w">como </span><span class="w">as </span><span class="w">megaobras </span><span class="w">foram </span><span class="w">construídas</span></div>
+        </div>
+      </div>
+
+      <audio id="whoosh" src="assets/sfx/whoosh.wav" data-start="0" data-duration="0.7" data-track-index="1" data-volume="0.9"></audio>
+    </div>
+    <script>
+      const FPS = 30, DUR = 4.2, N = DUR * FPS;
+
+      // curva da casa: Easing.bezier(0.16,1,0.3,1) do Remotion, igual (sem plugin)
+      const bezier = (x1, y1, x2, y2) => {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        return (x) => {
+          if (x <= 0) return 0;
+          if (x >= 1) return 1;
+          let lo = 0, hi = 1, t = x;
+          for (let i = 0; i < 40; i++) {
+            const xt = ((ax * t + bx) * t + cx) * t;
+            if (xt < x) lo = t; else hi = t;
+            t = (lo + hi) / 2;
+          }
+          return ((ay * t + by) * t + cy) * t;
+        };
+      };
+      const entrada = bezier(0.16, 1, 0.3, 1);
+
+      // mola do Remotion (massa 1), solução analítica; p = progresso do tween sobre DUR segundos
+      const mola = (rigidez, amort) => {
+        const w0 = Math.sqrt(rigidez), z = amort / (2 * Math.sqrt(rigidez));
+        const wd = w0 * Math.sqrt(1 - z * z);
+        return (p) => {
+          const t = p * DUR;
+          return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t));
+        };
+      };
+
+      // aleatório determinístico da casa
+      const ruido = (x, s = 0) => { const v = Math.sin(x * 12.9898 + s * 78.233) * 43758.5453; return v - Math.floor(v); };
+
+      // poeira: 28 partículas (mesma semente do Remotion)
+      const dust = document.getElementById("dust");
+      const P = Array.from({ length: 28 }, (_, i) => {
+        const r = (1 + ruido(i, 6) * 3);
+        const el = document.createElement("div");
+        el.className = "p";
+        el.style.cssText = `width:${r * 2}px;height:${r * 2}px;opacity:${0.15 + 0.35 * ruido(i, 7)};filter:blur(${r * 0.6}px)`;
+        dust.appendChild(el);
+        return { el, x: ruido(i, 3) * 1920, y0: ruido(i, 5) * 1080, vel: 0.2 + ruido(i, 4) * 0.6 };
+      });
+
+      const glow = document.getElementById("glow"), turb = document.getElementById("turb"), wrap = document.getElementById("shape-wrap");
+      const apply = (f) => {
+        glow.style.background =
+          `radial-gradient(ellipse at ${50 + Math.sin(f / 90) * 18}% ${40 + Math.cos(f / 110) * 14}%, rgba(255,176,32,0.22) 0%, transparent 55%), ` +
+          `radial-gradient(ellipse at ${30 - Math.sin(f / 120) * 12}% 85%, rgba(79,163,217,0.12) 0%, transparent 50%)`;
+        turb.setAttribute("seed", String(Math.round(f) % 97));
+        for (const p of P) p.el.style.transform = `translate(${p.x}px, ${(((p.y0 - f * p.vel) % 1080) + 1080) % 1080}px)`;
+        wrap.style.filter = `drop-shadow(0 0 ${40 * (0.35 + 0.25 * Math.sin(f / 9))}px rgba(255,176,32,0.8))`;
+      };
+
+      const tl = gsap.timeline({ paused: true });
+      const px = (frames) => frames / FPS;
+
+      // relógio do fundo: um quadro = uma conta
+      const clock = { f: 0 };
+      tl.to(clock, { f: N, duration: DUR, ease: "none", onUpdate: () => apply(clock.f) }, 0);
+      apply(0);
+
+      // forma: duas molas empilhadas (wrapper 140/12, quadrado 180/13) + giro de 0,8°/quadro
+      tl.fromTo("#shape-wrap", { scale: 0 }, { scale: 1, duration: DUR, ease: mola(140, 12) }, 0);
+      tl.fromTo("#shape", { scale: 0 }, { scale: 1, duration: DUR, ease: mola(180, 13) }, 0);
+      tl.fromTo("#shape", { rotation: 0 }, { rotation: 0.8 * N, duration: DUR, ease: "none" }, 0);
+
+      // nome: máscara, palavra a palavra, 5 quadros entre elas, começa no quadro 12, 16 quadros cada
+      document.querySelectorAll(".m > span").forEach((el, i) => {
+        tl.fromTo(el, { yPercent: 105 }, { yPercent: 0, duration: px(16), ease: entrada }, px(12 + i * 5));
+      });
+
+      // linha: 560 de largura, quadros 22–46
+      tl.fromTo("#rule", { scaleX: 0 }, { scaleX: 1, duration: px(24), ease: entrada }, px(22));
+
+      // slogan: subir, 3 quadros entre palavras, começa no 30, 16 quadros cada
+      document.querySelectorAll("#tag .w").forEach((el, i) => {
+        tl.fromTo(el, { opacity: 0, y: 0.42 * 38, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: px(16), ease: entrada }, px(30 + i * 3));
+      });
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Anton"; src: url("assets/fonts/Anton-Regular.ttf"); font-weight: 400; }
+      @font-face { font-family: "Inter"; src: url("assets/fonts/Inter-RegularVariable.ttf"); font-weight: 100 900; }
+      :root { --ground:#0b0f17; --ink:#f4f1ea; --accent:#f5a524; --accent2:#4fa3d9; }
+      * { margin:0; padding:0; box-sizing:border-box; }
+      html, body { width:1920px; height:1080px; overflow:hidden; background:var(--ground); }
+      #root { position:relative; width:1920px; height:1080px; overflow:hidden; font-family:"Inter",sans-serif; color:var(--ink); }
+      #bg { position:absolute; inset:0; background:linear-gradient(135deg,#0b0f17 0%,#1b2a49 50%,#0b0f17 100%); background-size:200% 200%; }
+      .scene { position:absolute; inset:0; }
+      .center { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+      h1 { font-family:"Anton"; font-weight:400; font-size:170px; letter-spacing:.01em; }
+      h2 { font-family:"Anton"; font-weight:400; font-size:110px; }
+      .sub { font-size:46px; opacity:.8; margin-top:18px; }
+      .num { font-size:260px; font-weight:900; color:var(--accent); font-variant-numeric:tabular-nums; }
+      #chart { position:absolute; left:240px; right:240px; top:300px; bottom:160px; display:flex; align-items:flex-end; gap:34px; }
+      .bar { flex:1; background:linear-gradient(180deg,var(--accent),#c97b0a); border-radius:12px 12px 0 0; height:0; position:relative; }
+      .bar span { position:absolute; top:-58px; left:0; right:0; text-align:center; font-size:38px; font-weight:700; }
+      .bar i { position:absolute; bottom:-52px; left:0; right:0; text-align:center; font-size:30px; font-style:normal; opacity:.7; }
+      .p { position:absolute; left:0; top:0; border-radius:99px; background:var(--accent2); }
+      #lower { position:absolute; left:120px; bottom:110px; padding:22px 40px; border-left:10px solid var(--accent); background:rgba(255,255,255,.1); }
+      #lower b { display:block; font-size:54px; }
+      #lower u { text-decoration:none; font-size:32px; opacity:.75; }
+      .ring { position:absolute; border:6px solid var(--accent); border-radius:50%; left:50%; top:50%; width:1500px; height:1500px; margin:-750px 0 0 -750px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30" data-width="1920" data-height="1080">
+      <div id="bg" class="clip" data-start="0" data-duration="30" data-track-index="0"></div>
+      <div id="s1" class="scene center clip" data-start="0" data-duration="5" data-track-index="1"><h1 id="t1">GRP Construtora</h1><div class="sub" id="u1">Benchmark de render, 30 segundos</div></div>
+      <div id="s2" class="scene center clip" data-start="5" data-duration="5" data-track-index="1"><div class="num" id="n2">0</div><div class="sub">unidades entregues</div></div>
+      <div id="s3" class="scene clip" data-start="10" data-duration="5" data-track-index="1"><h2 id="t3" style="position:absolute;left:240px;top:90px">Vendas por trimestre</h2><div id="chart"></div></div>
+      <div id="s4" class="scene clip" data-start="15" data-duration="5" data-track-index="1"><div id="parts"></div><div class="scene center"><h1 id="t4">Partículas</h1></div></div>
+      <div id="s5" class="scene center clip" data-start="20" data-duration="5" data-track-index="1"><div id="rings"></div><h1 id="t5" style="position:relative">Obra em andamento</h1><div class="num" id="n5" style="font-size:150px;position:relative">0%</div></div>
+      <div id="s6" class="scene center clip" data-start="25" data-duration="5" data-track-index="1"><h1 id="t6">Obrigado</h1><div class="sub" id="u6">grpconstrutora.tech</div></div>
+      <div id="lower-clip" class="scene clip" data-start="3" data-duration="2" data-track-index="2"><div id="lower"><b>Ronaldo Vieira</b><u>Tecnologia e Inovação</u></div></div>
+      <div id="lower-clip2" class="scene clip" data-start="27" data-duration="2.5" data-track-index="2"><div id="lower2" style="position:absolute;left:120px;bottom:110px;padding:22px 40px;border-left:10px solid var(--accent2);background:rgba(255,255,255,.1)"><b style="display:block;font-size:54px">Estúdio GRP</b><span style="font-size:32px;opacity:.75">Motion por código</span></div></div>
+    </div>
+    <script>
+      let seed = 12345;
+      const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+      const tl = gsap.timeline({ paused: true });
+      tl.to("#bg", { backgroundPosition: "100% 100%", duration: 30, ease: "none" }, 0);
+      // 1 título
+      tl.fromTo("#t1", { opacity: 0, y: 80, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 1, ease: "power3.out" }, 0.2);
+      tl.fromTo("#u1", { opacity: 0 }, { opacity: 0.8, duration: 0.8 }, 1);
+      tl.to("#s1", { opacity: 0, duration: 0.4 }, 4.6);
+      // 2 contador
+      tl.fromTo("#s2", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 5);
+      const c = { v: 0 };
+      tl.to(c, { v: 12500, duration: 3, ease: "power2.out", onUpdate() { document.getElementById("n2").textContent = Math.round(c.v).toLocaleString("pt-BR"); } }, 5.2);
+      tl.to("#s2", { opacity: 0, duration: 0.4 }, 9.6);
+      // 3 gráfico de barras
+      const chart = document.getElementById("chart");
+      const vals = [38, 52, 47, 71, 63, 88, 79, 95];
+      vals.forEach((v, i) => {
+        const b = document.createElement("div"); b.className = "bar"; b.id = "b" + i;
+        b.innerHTML = "<span>" + v + "</span><i>T" + (i + 1) + "</i>"; chart.appendChild(b);
+        tl.to(b, { height: (v * 6.2) + "px", duration: 0.9, ease: "back.out(1.4)" }, 10.5 + i * 0.2);
+      });
+      tl.fromTo("#t3", { opacity: 0, x: -60 }, { opacity: 1, x: 0, duration: 0.6 }, 10.1);
+      tl.to("#s3", { opacity: 0, duration: 0.4 }, 14.6);
+      // 4 partículas
+      const parts = document.getElementById("parts");
+      for (let i = 0; i < 90; i++) {
+        const el = document.createElement("div"); el.className = "p";
+        const s = 6 + rnd() * 22; el.style.width = el.style.height = s + "px"; el.style.opacity = 0.25 + rnd() * 0.6;
+        parts.appendChild(el);
+        tl.fromTo(el, { x: rnd() * 1900, y: 1100 + rnd() * 200 }, { x: rnd() * 1900, y: -100, duration: 3 + rnd() * 1.8, ease: "none" }, 15 + rnd() * 0.8);
+      }
+      tl.fromTo("#t4", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.8, ease: "power3.out" }, 15.3);
+      tl.to("#s4", { opacity: 0, duration: 0.4 }, 19.6);
+      // 5 anéis + progresso
+      const rings = document.getElementById("rings");
+      for (let i = 0; i < 5; i++) {
+        const r = document.createElement("div"); r.className = "ring"; rings.appendChild(r);
+        tl.fromTo(r, { scale: 0.07, opacity: 0.9 }, { scale: 1, opacity: 0, duration: 3, ease: "power1.out" }, 20.2 + i * 0.6);
+      }
+      tl.fromTo("#t5", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.7 }, 20.3);
+      const pr = { v: 0 };
+      tl.to(pr, { v: 100, duration: 3.5, ease: "power1.inOut", onUpdate() { document.getElementById("n5").textContent = Math.round(pr.v) + "%"; } }, 20.6);
+      tl.to("#s5", { opacity: 0, duration: 0.4 }, 24.6);
+      // 6 fecho
+      tl.fromTo("#t6", { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 1.2, ease: "power3.out" }, 25.2);
+      tl.fromTo("#u6", { opacity: 0 }, { opacity: 0.8, duration: 0.8 }, 26);
+      // terços inferiores
+      tl.fromTo("#lower", { opacity: 0, x: -140 }, { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" }, 3);
+      tl.fromTo("#lower2", { opacity: 0, x: -140 }, { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" }, 27);
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
